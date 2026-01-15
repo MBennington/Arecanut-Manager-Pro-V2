@@ -89,6 +89,12 @@
     transition: all 0.3s ease;
     background: var(--bg);
     margin-bottom: 20px;
+    /* Safari touch improvements */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    position: relative;
 }
 
 .key-upload-zone:hover {

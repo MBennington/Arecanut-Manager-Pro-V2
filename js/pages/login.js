@@ -106,8 +106,19 @@ export const LoginPage = {
         const setupForm = document.getElementById('setupForm');
         const cancelSetupBtn = document.getElementById('cancelSetupBtn');
 
-        // File upload zone click
-        uploadZone?.addEventListener('click', () => fileInput?.click());
+        // File upload zone click (Safari compatible)
+        uploadZone?.addEventListener('click', (e) => {
+            // Prevent double triggers
+            if (e.target === fileInput) return;
+            fileInput?.click();
+        });
+
+        // Touch support for mobile Safari
+        uploadZone?.addEventListener('touchend', (e) => {
+            if (e.target === fileInput) return;
+            e.preventDefault();
+            fileInput?.click();
+        });
 
         // File input change
         fileInput?.addEventListener('change', (e) => {
@@ -116,20 +127,33 @@ export const LoginPage = {
             }
         });
 
-        // Drag and drop
-        uploadZone?.addEventListener('dragover', (e) => {
+        // Drag and drop (Safari compatible - needs dragenter)
+        uploadZone?.addEventListener('dragenter', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             uploadZone.classList.add('dragover');
         });
 
-        uploadZone?.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
+        uploadZone?.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone?.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Only remove class if leaving the zone entirely
+            if (!uploadZone.contains(e.relatedTarget)) {
+                uploadZone.classList.remove('dragover');
+            }
         });
 
         uploadZone?.addEventListener('drop', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             uploadZone.classList.remove('dragover');
-            if (e.dataTransfer.files?.length) {
+            if (e.dataTransfer?.files?.length) {
                 this.handleFileSelect(e.dataTransfer.files[0]);
             }
         });

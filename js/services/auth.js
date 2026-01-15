@@ -291,15 +291,38 @@ export const AuthService = {
     /**
      * Convert file to base64
      */
+    /**
+     * Convert file to base64 (Safari compatible)
+     */
     fileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
+            
             reader.onload = () => {
-                const base64 = reader.result.split(',')[1] || reader.result;
-                resolve(base64);
+                try {
+                    // Handle both data URL and raw base64
+                    const result = reader.result;
+                    const base64 = result.includes(',') 
+                        ? result.split(',')[1] 
+                        : result;
+                    resolve(base64);
+                } catch (e) {
+                    reject(new Error('Failed to process file'));
+                }
             };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
+            
+            reader.onerror = () => {
+                reject(new Error('Failed to read file'));
+            };
+            
+            // Safari sometimes needs a slight delay
+            setTimeout(() => {
+                try {
+                    reader.readAsDataURL(file);
+                } catch (e) {
+                    reject(new Error('Browser does not support file reading'));
+                }
+            }, 10);
         });
     }
 };
