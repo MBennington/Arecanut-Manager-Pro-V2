@@ -1,0 +1,379 @@
+/**
+ * Admin Panel Styles
+ * User management and session monitoring
+ */
+
+/* Admin Header */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.admin-header h2 {
+    margin: 0;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-header h2 i {
+    color: var(--purple);
+}
+
+/* Stats Cards */
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.admin-stat-card {
+    background: var(--card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.admin-stat-card .icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.admin-stat-card .icon.users {
+    background: #E8F5E9;
+    color: var(--primary);
+}
+
+.admin-stat-card .icon.sessions {
+    background: #E3F2FD;
+    color: var(--info);
+}
+
+.admin-stat-card .icon.active {
+    background: #FFF3E0;
+    color: var(--accent-dark);
+}
+
+.admin-stat-card .info h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: var(--text);
+}
+
+.admin-stat-card .info p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+/* Tabs */
+.admin-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0;
+}
+
+.admin-tab {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-light);
+    position: relative;
+    transition: all 0.3s;
+}
+
+.admin-tab:hover {
+    color: var(--primary);
+}
+
+.admin-tab.active {
+    color: var(--primary);
+}
+
+.admin-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 3px 3px 0 0;
+}
+
+/* Tab Content */
+.admin-tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.admin-tab-content.active {
+    display: block;
+}
+
+/* User Card */
+.user-card {
+    background: var(--card);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.user-card .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.user-card .user-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.user-card .user-info h4 {
+    margin: 0 0 5px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-card .user-info p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.user-card .user-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+.user-card .user-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.user-card .user-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.user-card .action-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.user-card .action-btn.regenerate {
+    background: #E3F2FD;
+    color: var(--info);
+}
+
+.user-card .action-btn.revoke {
+    background: #FFEBEE;
+    color: var(--danger);
+}
+
+.user-card .action-btn:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+}
+
+/* Session Card */
+.session-card {
+    background: var(--card);
+    border-radius: var(--border-radius);
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.session-card .device-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+
+.session-card .session-info {
+    flex: 1;
+    min-width: 150px;
+}
+
+.session-card .session-info h5 {
+    margin: 0 0 3px;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.session-card .session-info p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.8rem;
+}
+
+.session-card .terminate-btn {
+    padding: 6px 12px;
+    background: #FFEBEE;
+    color: var(--danger);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.session-card .terminate-btn:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* Create User Form */
+.create-user-form {
+    background: var(--card);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    box-shadow: var(--shadow-md);
+    max-width: 500px;
+}
+
+.create-user-form h3 {
+    margin: 0 0 20px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.create-user-form h3 i {
+    color: var(--primary);
+}
+
+/* Role Badge */
+.role-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.role-badge.superadmin {
+    background: #F3E5F5;
+    color: var(--purple);
+}
+
+.role-badge.admin {
+    background: #E3F2FD;
+    color: var(--info);
+}
+
+.role-badge.user {
+    background: #E8F5E9;
+    color: var(--primary);
+}
+
+/* Empty State */
+.admin-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-light);
+}
+
+.admin-empty i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: var(--border);
+}
+
+/* Status Indicators */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.status-dot.active {
+    background: var(--primary);
+    box-shadow: 0 0 8px rgba(46, 125, 50, 0.5);
+}
+
+.status-dot.inactive {
+    background: var(--text-muted);
+}
+
+.status-dot.revoked {
+    background: var(--danger);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .user-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .user-card .user-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .admin-tabs {
+        overflow-x: auto;
+    }
+}

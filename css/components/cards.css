@@ -1,0 +1,130 @@
+/**
+ * Card Component Styles
+ * Stat cards, chart cards, and form cards
+ */
+
+/* Base Card */
+.card {
+    background: var(--card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+
+/* Stat Card */
+.stat-card {
+    background: var(--card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Card Accent Border */
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+}
+
+.stat-card.blue::after { background: var(--info); }
+.stat-card.orange::after { background: var(--accent); }
+.stat-card.red::after { background: var(--danger); }
+.stat-card.purple::after { background: var(--purple); }
+.stat-card.secondary::after { background: var(--secondary); }
+
+/* Stat Card Content */
+.stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: bold;
+    margin-top: 5px;
+    display: block;
+    color: var(--text);
+}
+
+.stat-sub {
+    font-size: var(--font-size-xs);
+    color: var(--text-light);
+    margin-top: 5px;
+}
+
+/* Chart Card */
+.chart-card {
+    background: var(--card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-md);
+}
+
+.chart-card h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Form Card */
+.form-card {
+    background: var(--card);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-card h2 {
+    margin: 0 0 20px 0;
+    font-size: 1.3rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .chart-wrapper {
+        height: 250px;
+    }
+
+    .stat-card {
+        padding: 15px;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+    }
+
+    .form-card {
+        padding: 20px;
+    }
+}

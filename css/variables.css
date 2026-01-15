@@ -1,0 +1,64 @@
+/**
+ * Design System Variables
+ * Arecanut Manager Pro - Theme Configuration
+ */
+
+:root {
+    /* Primary Colors - Nature-inspired greens */
+    --primary: #2E7D32;
+    --primary-dark: #1B5E20;
+    --primary-light: #4CAF50;
+    
+    /* Secondary Colors */
+    --secondary: #00796B;
+    --secondary-light: #26A69A;
+    
+    /* Accent Colors */
+    --accent: #F9A825;
+    --accent-dark: #F57F17;
+    
+    /* Semantic Colors */
+    --danger: #D32F2F;
+    --danger-light: #EF5350;
+    --success: #388E3C;
+    --warning: #FFA000;
+    --info: #1976D2;
+    --purple: #7B1FA2;
+    
+    /* Neutral Colors */
+    --bg: #F3F4F6;
+    --bg-dark: #E5E7EB;
+    --card: #FFFFFF;
+    --text: #1F2937;
+    --text-light: #6B7280;
+    --text-muted: #9CA3AF;
+    --border: #E5E7EB;
+    --border-light: #F3F4F6;
+    
+    /* Layout */
+    --sidebar-width: 250px;
+    --header-height: 70px;
+    --content-padding: 20px;
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+    --border-radius-xs: 4px;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 5px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 4px 15px rgba(0, 0, 0, 0.05);
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    
+    /* Typography */
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.85rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.2rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: 2rem;
+}

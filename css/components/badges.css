@@ -1,0 +1,67 @@
+/**
+ * Badge Component Styles
+ * Status badges and labels
+ */
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: var(--border-radius-xs);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Badge Variants */
+.badge-buy {
+    background: #E8F5E9;
+    color: var(--primary);
+}
+
+.badge-sell {
+    background: #E3F2FD;
+    color: var(--info);
+}
+
+.badge-exp {
+    background: #FFEBEE;
+    color: var(--danger);
+}
+
+.badge-proc {
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+.badge-loan {
+    background: #F3E5F5;
+    color: var(--purple);
+}
+
+/* Additional Badge States */
+.badge-success {
+    background: #E8F5E9;
+    color: var(--success);
+}
+
+.badge-warning {
+    background: #FFF3E0;
+    color: var(--warning);
+}
+
+.badge-danger {
+    background: #FFEBEE;
+    color: var(--danger);
+}
+
+.badge-info {
+    background: #E3F2FD;
+    color: var(--info);
+}
+
+/* Large Badge */
+.badge-lg {
+    padding: 6px 14px;
+    font-size: var(--font-size-sm);
+}

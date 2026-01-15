@@ -1,0 +1,105 @@
+/**
+ * Button Component Styles
+ * Primary, secondary, and utility buttons
+ */
+
+.btn {
+    display: inline-block;
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Button Variants */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(46, 125, 50, 0.3);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 4px 8px rgba(46, 125, 50, 0.4);
+}
+
+.btn-blue {
+    background: linear-gradient(135deg, var(--info) 0%, #1565C0 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger) 0%, #C62828 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(211, 47, 47, 0.3);
+}
+
+.btn-orange {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #333;
+    box-shadow: 0 2px 4px rgba(249, 168, 37, 0.3);
+}
+
+.btn-purple {
+    background: linear-gradient(135deg, var(--purple) 0%, #6A1B9A 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(123, 31, 162, 0.3);
+}
+
+.btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-dark);
+    opacity: 1;
+}
+
+/* Small Button */
+.btn-sm {
+    padding: 10px 16px;
+    font-size: var(--font-size-sm);
+}
+
+/* Inline Button */
+.btn-inline {
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Icon Button */
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+}

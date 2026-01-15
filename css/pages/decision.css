@@ -1,0 +1,226 @@
+/**
+ * Decision Engine Page Styles
+ * Smart decision analysis UI
+ */
+
+/* Decision Box */
+.decision-box {
+    background: white;
+    padding: 25px;
+    border-radius: var(--border-radius);
+    margin-top: 20px;
+    box-shadow: var(--shadow-xl);
+    border-left: 5px solid #ccc;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Verdict States */
+.decision-box.verdict-good {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, #FFFFFF 0%, #F1F8E9 100%);
+}
+
+.decision-box.verdict-warn {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF8E1 100%);
+}
+
+.decision-box.verdict-bad {
+    border-color: var(--danger);
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFEBEE 100%);
+}
+
+/* Decision Header */
+.decision-header {
+    font-size: var(--font-size-lg);
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.verdict-good .decision-header {
+    color: var(--primary);
+}
+
+.verdict-warn .decision-header {
+    color: #F57F17;
+}
+
+.verdict-bad .decision-header {
+    color: var(--danger);
+}
+
+/* Decision Advice */
+.decision-advice {
+    margin-bottom: 20px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* Math Rows */
+.math-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: var(--font-size-sm);
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 8px;
+}
+
+.math-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.math-label {
+    color: var(--text-light);
+}
+
+.math-val {
+    font-weight: bold;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    color: var(--text);
+}
+
+/* Decision Engine Header */
+.decision-engine-header {
+    margin-top: 0;
+    color: var(--purple);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.decision-engine-desc {
+    color: var(--text-light);
+    font-size: var(--font-size-sm);
+    margin-bottom: 20px;
+}
+
+/* Analyze Button */
+.btn-analyze {
+    background: linear-gradient(135deg, #673AB7 0%, #512DA8 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(103, 58, 183, 0.3);
+}
+
+.btn-analyze:hover {
+    box-shadow: 0 4px 8px rgba(103, 58, 183, 0.4);
+}
+
+/* Formula Section */
+.formula-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border);
+}
+
+.formula-section h4 {
+    color: var(--purple);
+    margin: 0 0 15px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.formula-box {
+    background: rgba(103, 58, 183, 0.05);
+    border: 1px solid rgba(103, 58, 183, 0.15);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.formula-title {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.formula-box code.formula {
+    display: block;
+    background: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 0.95rem;
+    color: var(--purple);
+    margin-bottom: 8px;
+    border-left: 3px solid var(--purple);
+}
+
+.formula-box code.formula sub {
+    font-size: 0.7em;
+    color: var(--text-light);
+}
+
+.formula-calc {
+    padding: 5px 15px;
+    color: var(--text-light);
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 0.85rem;
+}
+
+.formula-calc.result {
+    color: var(--text);
+    font-size: 1rem;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    margin-top: 5px;
+}
+
+.formula-calc strong {
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+/* Formula Logic */
+.formula-logic {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.formula-logic ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.formula-logic li {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border-light);
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.formula-logic li:last-child {
+    border-bottom: none;
+}
+
+.formula-logic li strong {
+    font-family: 'SF Mono', 'Consolas', monospace;
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .formula-box code.formula {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+    
+    .formula-calc {
+        font-size: 0.8rem;
+    }
+}
