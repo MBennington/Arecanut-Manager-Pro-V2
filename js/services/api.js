@@ -3,7 +3,10 @@
  * Handles all HTTP requests to the backend with authentication
  */
 
-const API_BASE = 'http://localhost:5000/api';
+// Use relative URL in production, localhost in development
+const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000/api' 
+    : '/api';
 const TOKEN_KEY = 'areca_session_token';
 
 /**

@@ -1,0 +1,15 @@
+# Render Blueprint - Arecanut Manager Pro
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: arecanut-manager-pro
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: node backend/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false  # Set this manually in Render dashboard for security
