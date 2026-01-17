@@ -98,6 +98,34 @@ export const AuthService = {
     },
 
     /**
+     * Login with username and password
+     * @param {string} username - The username
+     * @param {string} password - The password
+     */
+    async loginWithPassword(username, password) {
+        const response = await fetch(`${API_BASE}/auth/login/password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username,
+                password,
+                deviceInfo: this.getDeviceInfo()
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Login failed');
+        }
+
+        // Store auth data
+        this.setAuth(data.data.token, data.data.user);
+
+        return data.data;
+    },
+
+    /**
      * Logout current session
      */
     async logout() {
@@ -244,6 +272,26 @@ export const AuthService = {
         return this.request(`/auth/users/${userId}/revoke`, {
             method: 'POST',
             body: JSON.stringify({ reason })
+        });
+    },
+
+    /**
+     * Update user password (admin only)
+     */
+    async updateUserPassword(userId, password) {
+        return this.request(`/auth/users/${userId}/password`, {
+            method: 'POST',
+            body: JSON.stringify({ password })
+        });
+    },
+
+    /**
+     * Remove user password (admin only)
+     */
+    async removeUserPassword(userId) {
+        return this.request(`/auth/users/${userId}/password`, {
+            method: 'POST',
+            body: JSON.stringify({ removePassword: true })
         });
     },
 

@@ -361,6 +361,110 @@
     background: var(--danger);
 }
 
+/* Auth Badges */
+.auth-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.auth-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.auth-badge.password {
+    background: #E8F5E9;
+    color: var(--primary);
+}
+
+.auth-badge.no-password {
+    background: #FFF3E0;
+    color: var(--accent-dark);
+}
+
+.auth-badge.keyfile {
+    background: #E3F2FD;
+    color: var(--info);
+}
+
+/* Password Action Button */
+.user-card .action-btn.password {
+    background: #E8F5E9;
+    color: var(--primary);
+}
+
+/* Password Modal */
+.password-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.password-modal.active {
+    display: flex;
+}
+
+.password-modal-content {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 25px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+}
+
+.password-modal-content h3 {
+    margin: 0 0 10px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.password-modal-content h3 i {
+    color: var(--primary);
+}
+
+.password-modal-content p {
+    margin: 0 0 20px;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-actions .btn {
+    flex: 1;
+}
+
+/* Form Hint */
+.form-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .user-card {
@@ -371,9 +475,14 @@
     .user-card .user-actions {
         width: 100%;
         justify-content: flex-end;
+        flex-wrap: wrap;
     }
 
     .admin-tabs {
         overflow-x: auto;
+    }
+
+    .modal-actions {
+        flex-direction: column;
     }
 }

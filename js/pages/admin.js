@@ -91,6 +91,11 @@ export const AdminPage = {
                                 <input type="text" class="form-control" id="newUsername" required minlength="3">
                             </div>
                             <div class="form-group">
+                                <label>Password *</label>
+                                <input type="password" class="form-control" id="newPassword" required minlength="8" placeholder="Min 8 characters">
+                                <small class="form-hint">User will use this password to login</small>
+                            </div>
+                            <div class="form-group">
                                 <label>Email</label>
                                 <input type="email" class="form-control" id="newEmail">
                             </div>
@@ -106,7 +111,7 @@ export const AdminPage = {
                                 <input type="number" class="form-control" id="newDeviceLimit" value="3" min="1" max="10">
                             </div>
                             <div class="form-group">
-                                <label>Key Expires In (days)</label>
+                                <label>Key File Expires In (days)</label>
                                 <input type="number" class="form-control" id="newExpiresDays" value="365" min="1" max="730">
                             </div>
                             <div class="form-group">
@@ -114,8 +119,35 @@ export const AdminPage = {
                                 <input type="text" class="form-control" id="newNotes" placeholder="Optional notes">
                             </div>
                             <button type="submit" class="btn btn-primary" id="createUserBtn">
-                                <i class="fas fa-key"></i> Create User & Generate Key File
+                                <i class="fas fa-user-plus"></i> Create User
                             </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Password Modal -->
+                <div class="password-modal" id="passwordModal">
+                    <div class="password-modal-content">
+                        <h3><i class="fas fa-key"></i> Update Password</h3>
+                        <p id="passwordModalUser"></p>
+                        <form id="updatePasswordForm">
+                            <input type="hidden" id="passwordUserId">
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" class="form-control" id="newUserPassword" required minlength="8" placeholder="Min 8 characters">
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm Password</label>
+                                <input type="password" class="form-control" id="confirmUserPassword" required minlength="8">
+                            </div>
+                            <div class="modal-actions">
+                                <button type="submit" class="btn btn-primary" id="updatePasswordBtn">
+                                    <i class="fas fa-save"></i> Update Password
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="cancelPasswordBtn">
+                                    Cancel
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -156,6 +188,27 @@ export const AdminPage = {
         document.getElementById('createUserForm')?.addEventListener('submit', (e) => {
             e.preventDefault();
             this.createUser();
+        });
+
+        // Password modal
+        const passwordModal = document.getElementById('passwordModal');
+        const updatePasswordForm = document.getElementById('updatePasswordForm');
+        const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
+
+        updatePasswordForm?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.updatePassword();
+        });
+
+        cancelPasswordBtn?.addEventListener('click', () => {
+            this.hidePasswordModal();
+        });
+
+        // Close modal on outside click
+        passwordModal?.addEventListener('click', (e) => {
+            if (e.target === passwordModal) {
+                this.hidePasswordModal();
+            }
         });
     },
 
@@ -238,6 +291,10 @@ export const AdminPage = {
         container.querySelectorAll('.revoke-btn').forEach(btn => {
             btn.addEventListener('click', () => this.revokeUser(btn.dataset.userId));
         });
+
+        container.querySelectorAll('.password-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.showPasswordModal(btn.dataset.userId, btn.dataset.username));
+        });
     },
 
     /**
@@ -252,6 +309,10 @@ export const AdminPage = {
             ? new Date(user.keyFileExpiresAt).toLocaleDateString()
             : 'N/A';
 
+        const passwordStatus = user.hasPassword 
+            ? '<span class="auth-badge password"><i class="fas fa-lock"></i> Password</span>'
+            : '<span class="auth-badge no-password"><i class="fas fa-lock-open"></i> No Password</span>';
+
         return `
             <div class="user-card">
                 <div class="avatar">${initials}</div>
@@ -261,16 +322,23 @@ export const AdminPage = {
                         <span class="role-badge ${user.role}">${user.role}</span>
                     </h4>
                     <p>${user.email || 'No email'}</p>
+                    <div class="auth-badges">
+                        ${passwordStatus}
+                        <span class="auth-badge keyfile"><i class="fas fa-key"></i> Key File</span>
+                    </div>
                 </div>
                 <div class="user-meta">
                     <span><i class="fas fa-desktop"></i> ${user.deviceLimit} devices</span>
-                    <span><i class="fas fa-calendar"></i> Expires: ${expiresDate}</span>
+                    <span><i class="fas fa-calendar"></i> Key expires: ${expiresDate}</span>
                     <span><i class="fas fa-sign-in-alt"></i> ${user.loginCount || 0} logins</span>
                     <span><span class="status-dot ${statusClass}"></span>${statusText}</span>
                 </div>
                 <div class="user-actions">
+                    <button class="action-btn password password-btn" data-user-id="${user.id}" data-username="${user.username}">
+                        <i class="fas fa-key"></i> ${user.hasPassword ? 'Change' : 'Set'} Password
+                    </button>
                     <button class="action-btn regenerate regenerate-btn" data-user-id="${user.id}">
-                        <i class="fas fa-redo"></i> Regenerate
+                        <i class="fas fa-redo"></i> New Key
                     </button>
                     ${!user.keyFileRevoked ? `
                         <button class="action-btn revoke revoke-btn" data-user-id="${user.id}">
@@ -346,12 +414,19 @@ export const AdminPage = {
         const btn = document.getElementById('createUserBtn');
         const originalText = btn.innerHTML;
 
+        const password = document.getElementById('newPassword')?.value;
+        if (!password || password.length < 8) {
+            alert('Password must be at least 8 characters');
+            return;
+        }
+
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
         try {
             const userData = {
                 username: document.getElementById('newUsername').value,
+                password: password,
                 email: document.getElementById('newEmail').value || undefined,
                 role: document.getElementById('newRole').value,
                 deviceLimit: parseInt(document.getElementById('newDeviceLimit').value),
@@ -361,10 +436,15 @@ export const AdminPage = {
 
             const result = await AuthService.createUser(userData);
 
-            // Download key file
-            AuthService.downloadKeyFile(result.data.keyFile, result.data.keyFileName);
-
-            alert(`User "${userData.username}" created! Key file downloaded.`);
+            // Download key file as backup
+            if (result.data.keyFile) {
+                const downloadKey = confirm(`User "${userData.username}" created!\n\nWould you also like to download a backup key file?`);
+                if (downloadKey) {
+                    AuthService.downloadKeyFile(result.data.keyFile, result.data.keyFileName);
+                }
+            } else {
+                alert(`User "${userData.username}" created!\nThey can now login with their username and password.`);
+            }
 
             // Reset form
             document.getElementById('createUserForm').reset();
@@ -424,6 +504,69 @@ export const AdminPage = {
             await this.loadData();
         } catch (error) {
             alert('Error: ' + error.message);
+        }
+    },
+
+    /**
+     * Show password modal
+     */
+    showPasswordModal(userId, username) {
+        const modal = document.getElementById('passwordModal');
+        const userLabel = document.getElementById('passwordModalUser');
+        const userIdInput = document.getElementById('passwordUserId');
+        const passwordInput = document.getElementById('newUserPassword');
+        const confirmInput = document.getElementById('confirmUserPassword');
+
+        if (userLabel) userLabel.textContent = `Set password for: ${username}`;
+        if (userIdInput) userIdInput.value = userId;
+        if (passwordInput) passwordInput.value = '';
+        if (confirmInput) confirmInput.value = '';
+
+        modal?.classList.add('active');
+        passwordInput?.focus();
+    },
+
+    /**
+     * Hide password modal
+     */
+    hidePasswordModal() {
+        const modal = document.getElementById('passwordModal');
+        modal?.classList.remove('active');
+    },
+
+    /**
+     * Update user password
+     */
+    async updatePassword() {
+        const userId = document.getElementById('passwordUserId')?.value;
+        const password = document.getElementById('newUserPassword')?.value;
+        const confirm = document.getElementById('confirmUserPassword')?.value;
+        const btn = document.getElementById('updatePasswordBtn');
+
+        if (!password || password.length < 8) {
+            alert('Password must be at least 8 characters');
+            return;
+        }
+
+        if (password !== confirm) {
+            alert('Passwords do not match');
+            return;
+        }
+
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+        try {
+            await AuthService.updateUserPassword(userId, password);
+            alert('Password updated successfully');
+            this.hidePasswordModal();
+            await this.loadData();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     }
 };

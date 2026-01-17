@@ -114,6 +114,7 @@ userSchema.methods.toPublicJSON = function() {
         keyFileCreatedAt: this.keyFileCreatedAt,
         keyFileExpiresAt: this.keyFileExpiresAt,
         keyFileRevoked: this.keyFileRevoked,
+        hasPassword: !!this.passwordHash,
         createdAt: this.createdAt
     };
 };

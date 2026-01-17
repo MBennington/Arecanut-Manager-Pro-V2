@@ -9,6 +9,122 @@ import { CryptoService } from '../services/crypto.js';
 import crypto from 'crypto';
 
 /**
+ * @desc    Authenticate with username and password
+ * @route   POST /api/auth/login/password
+ * @access  Public
+ */
+export const loginWithPassword = async (req, res) => {
+    try {
+        const { username, password, deviceInfo } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Username and password are required'
+            });
+        }
+
+        // Find user by username
+        const user = await User.findOne({ username, isActive: true });
+        
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid username or password'
+            });
+        }
+
+        // Check if user has password set
+        if (!user.passwordHash) {
+            return res.status(401).json({
+                success: false,
+                error: 'Password login not enabled for this account. Use key file.'
+            });
+        }
+
+        // Validate password
+        if (!user.validatePassword(password)) {
+            return res.status(401).json({
+                success: false,
+                error: 'Invalid username or password'
+            });
+        }
+
+        // Check if key file is revoked
+        if (user.keyFileRevoked) {
+            return res.status(403).json({
+                success: false,
+                error: 'Account access has been revoked'
+            });
+        }
+
+        // Generate device fingerprint
+        const deviceFingerprint = CryptoService.generateDeviceFingerprint(deviceInfo || {});
+
+        // Check device limit
+        const activeDevices = await Session.countActiveDevices(user._id);
+        
+        if (activeDevices.length >= user.deviceLimit) {
+            const existingSession = await Session.findOne({
+                user: user._id,
+                deviceFingerprint,
+                isActive: true,
+                expiresAt: { $gt: new Date() }
+            });
+
+            if (!existingSession) {
+                await Session.terminateOldestSession(user._id);
+            }
+        }
+
+        // Create session
+        const sessionData = {
+            userId: user._id.toString(),
+            username: user.username,
+            role: user.role,
+            permissions: user.permissions,
+            deviceFingerprint
+        };
+
+        const sessionToken = CryptoService.generateSessionToken(sessionData);
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        const parsedDeviceInfo = parseDeviceInfo(deviceInfo);
+
+        await Session.create({
+            user: user._id,
+            sessionToken,
+            deviceFingerprint,
+            deviceInfo: {
+                ...parsedDeviceInfo,
+                ip: req.ip || req.connection?.remoteAddress
+            },
+            expiresAt
+        });
+
+        // Update login stats
+        user.lastLoginAt = new Date();
+        user.loginCount += 1;
+        await user.save();
+
+        res.json({
+            success: true,
+            data: {
+                token: sessionToken,
+                user: user.toPublicJSON(),
+                expiresAt
+            }
+        });
+    } catch (error) {
+        console.error('Password login error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Authentication failed'
+        });
+    }
+};
+
+/**
  * @desc    Authenticate with key file
  * @route   POST /api/auth/login
  * @access  Public
@@ -225,7 +341,7 @@ export const logoutAll = async (req, res) => {
  */
 export const createUser = async (req, res) => {
     try {
-        const { username, email, role, permissions, deviceLimit, expiresInDays, notes } = req.body;
+        const { username, password, email, role, permissions, deviceLimit, expiresInDays, notes } = req.body;
 
         // Validate admin permissions
         if (!['admin', 'superadmin'].includes(req.user.role)) {
@@ -240,6 +356,14 @@ export const createUser = async (req, res) => {
             return res.status(403).json({
                 success: false,
                 error: 'Only superadmin can create admin users'
+            });
+        }
+
+        // Validate password if provided
+        if (password && password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 8 characters'
             });
         }
 
@@ -269,6 +393,12 @@ export const createUser = async (req, res) => {
             createdBy: req.user.userId,
             notes
         });
+
+        // Set password if provided
+        if (password) {
+            user.setPassword(password);
+            await user.save();
+        }
 
         // Generate encrypted key file
         const keyFileBuffer = CryptoService.generateKeyFile({
@@ -596,6 +726,77 @@ export const initializeSuperAdmin = async (req, res) => {
         });
     } catch (error) {
         console.error('Init error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+/**
+ * @desc    Update user password (Admin only)
+ * @route   POST /api/auth/users/:id/password
+ * @access  Admin
+ */
+export const updateUserPassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { password, removePassword } = req.body;
+
+        if (!['admin', 'superadmin'].includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        const user = await User.findById(id);
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Prevent non-superadmins from modifying superadmin passwords
+        if (user.role === 'superadmin' && req.user.role !== 'superadmin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Cannot modify superadmin account'
+            });
+        }
+
+        if (removePassword) {
+            // Remove password (disable password login)
+            user.passwordHash = null;
+            await user.save();
+
+            return res.json({
+                success: true,
+                message: 'Password login disabled',
+                data: user.toPublicJSON()
+            });
+        }
+
+        if (!password || password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 8 characters'
+            });
+        }
+
+        // Set new password
+        user.setPassword(password);
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Password updated successfully',
+            data: user.toPublicJSON()
+        });
+    } catch (error) {
+        console.error('Update password error:', error);
         res.status(500).json({
             success: false,
             error: error.message
