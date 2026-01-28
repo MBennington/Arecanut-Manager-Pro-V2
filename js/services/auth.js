@@ -1,6 +1,7 @@
 /**
  * Authentication Service
  * Handles key file authentication and session management
+ * Uses localStorage for persistent "stay logged in" functionality
  */
 
 // Use relative URL in production, localhost in development
@@ -9,22 +10,71 @@ const API_BASE = window.location.hostname === 'localhost'
     : '/api';
 const TOKEN_KEY = 'areca_session_token';
 const USER_KEY = 'areca_user';
+const EXPIRES_KEY = 'areca_session_expires';
+const NEVER_EXPIRES_KEY = 'areca_never_expires';
+
+// Migration flag to track if we've cleaned up old sessionStorage data
+const MIGRATED_KEY = 'areca_migrated_v2';
 
 export const AuthService = {
     /**
+     * Initialize - clean up old sessionStorage data (one-time migration)
+     */
+    _migrate() {
+        if (!localStorage.getItem(MIGRATED_KEY)) {
+            // Clear old sessionStorage data from previous version
+            sessionStorage.removeItem(TOKEN_KEY);
+            sessionStorage.removeItem(USER_KEY);
+            // Mark as migrated
+            localStorage.setItem(MIGRATED_KEY, 'true');
+        }
+    },
+
+    /**
      * Check if user is authenticated
+     * Validates token exists and hasn't expired locally
      */
     isAuthenticated() {
+        // Run migration check
+        this._migrate();
+        
         const token = this.getToken();
         const user = this.getUser();
-        return !!(token && user);
+        
+        if (!token || !user) {
+            return false;
+        }
+
+        // Check if session has expired locally (for non-superadmin users)
+        const neverExpires = localStorage.getItem(NEVER_EXPIRES_KEY) === 'true';
+        if (!neverExpires) {
+            const expiresAt = localStorage.getItem(EXPIRES_KEY);
+            // Only check expiration if we have a stored expiration date
+            if (expiresAt) {
+                try {
+                    const expiryDate = new Date(expiresAt);
+                    if (expiryDate < new Date()) {
+                        // Session expired, clear auth data
+                        this.clearAuth();
+                        return false;
+                    }
+                } catch {
+                    // Invalid date format, clear and return false
+                    this.clearAuth();
+                    return false;
+                }
+            }
+        }
+
+        return true;
     },
 
     /**
      * Get stored token
+     * Uses localStorage for persistent login across browser sessions
      */
     getToken() {
-        return sessionStorage.getItem(TOKEN_KEY);
+        return localStorage.getItem(TOKEN_KEY);
     },
 
     /**
@@ -32,7 +82,7 @@ export const AuthService = {
      */
     getUser() {
         try {
-            const data = sessionStorage.getItem(USER_KEY);
+            const data = localStorage.getItem(USER_KEY);
             return data ? JSON.parse(data) : null;
         } catch {
             return null;
@@ -41,16 +91,39 @@ export const AuthService = {
 
     /**
      * Store authentication data
+     * Saves to localStorage to persist across browser sessions
+     * @param {string} token - Session token
+     * @param {Object} user - User data
+     * @param {string|Date} expiresAt - Date or ISO string when session expires
+     * @param {boolean} neverExpires - If true, session never expires (super admin)
      */
-    setAuth(token, user) {
-        sessionStorage.setItem(TOKEN_KEY, token);
-        sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+    setAuth(token, user, expiresAt = null, neverExpires = false) {
+        // Clear all old data first to ensure clean state
+        this.clearAuth();
+        
+        localStorage.setItem(TOKEN_KEY, token);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        
+        // Store expiration as ISO string
+        if (expiresAt) {
+            const expiryStr = expiresAt instanceof Date 
+                ? expiresAt.toISOString() 
+                : String(expiresAt);
+            localStorage.setItem(EXPIRES_KEY, expiryStr);
+        }
+        
+        localStorage.setItem(NEVER_EXPIRES_KEY, neverExpires ? 'true' : 'false');
     },
 
     /**
      * Clear authentication data
      */
     clearAuth() {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(EXPIRES_KEY);
+        localStorage.removeItem(NEVER_EXPIRES_KEY);
+        // Also clear any old sessionStorage data
         sessionStorage.removeItem(TOKEN_KEY);
         sessionStorage.removeItem(USER_KEY);
     },
@@ -91,8 +164,13 @@ export const AuthService = {
             throw new Error(data.error || 'Login failed');
         }
 
-        // Store auth data
-        this.setAuth(data.data.token, data.data.user);
+        // Store auth data with expiration info for persistent login
+        this.setAuth(
+            data.data.token, 
+            data.data.user, 
+            data.data.expiresAt,
+            data.data.neverExpires || false
+        );
 
         return data.data;
     },
@@ -119,8 +197,13 @@ export const AuthService = {
             throw new Error(data.error || 'Login failed');
         }
 
-        // Store auth data
-        this.setAuth(data.data.token, data.data.user);
+        // Store auth data with expiration info for persistent login
+        this.setAuth(
+            data.data.token, 
+            data.data.user, 
+            data.data.expiresAt,
+            data.data.neverExpires || false
+        );
 
         return data.data;
     },
@@ -196,6 +279,7 @@ export const AuthService = {
      */
     async request(endpoint, options = {}) {
         const token = this.getToken();
+        const hadToken = !!token;
         
         const config = {
             ...options,
@@ -211,7 +295,10 @@ export const AuthService = {
 
         if (response.status === 401) {
             this.clearAuth();
-            window.dispatchEvent(new CustomEvent('auth:expired'));
+            // Only dispatch auth:expired if user was logged in (had a token)
+            if (hadToken) {
+                window.dispatchEvent(new CustomEvent('auth:expired'));
+            }
         }
 
         if (!response.ok) {

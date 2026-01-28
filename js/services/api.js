@@ -1,6 +1,7 @@
 /**
  * API Service
  * Handles all HTTP requests to the backend with authentication
+ * Uses localStorage for persistent sessions (synced with auth.js)
  */
 
 // Use relative URL in production, localhost in development
@@ -10,10 +11,10 @@ const API_BASE = window.location.hostname === 'localhost'
 const TOKEN_KEY = 'areca_session_token';
 
 /**
- * Get stored auth token
+ * Get stored auth token from localStorage (matching auth.js)
  */
 function getToken() {
-    return sessionStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem(TOKEN_KEY);
 }
 
 /**
@@ -22,6 +23,7 @@ function getToken() {
 async function request(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
     const token = getToken();
+    const hadToken = !!token;
     
     const config = {
         headers: {
@@ -37,10 +39,12 @@ async function request(endpoint, options = {}) {
         const data = await response.json();
         
         if (!response.ok) {
-            // Handle auth expiration
-            if (response.status === 401) {
-                sessionStorage.removeItem(TOKEN_KEY);
-                sessionStorage.removeItem('areca_user');
+            // Handle auth expiration - only if user was logged in
+            if (response.status === 401 && hadToken) {
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem('areca_user');
+                localStorage.removeItem('areca_session_expires');
+                localStorage.removeItem('areca_never_expires');
                 window.dispatchEvent(new CustomEvent('auth:expired'));
             }
             throw new Error(data.error || 'Request failed');

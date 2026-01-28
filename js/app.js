@@ -201,14 +201,17 @@ const App = {
             { id: 'buy', icon: 'fa-shopping-cart', label: 'Buy Stock' },
             { id: 'process', icon: 'fa-cogs', label: 'Process / Dehusk' },
             { id: 'sell', icon: 'fa-hand-holding-usd', label: 'Sell Stock' },
+            { id: 'income', icon: 'fa-money-bill-wave', label: 'Income' },
             { id: 'expense', icon: 'fa-file-invoice-dollar', label: 'Expenses' },
             { id: 'loan', icon: 'fa-university', label: 'Loans' },
+            { id: 'adjustments', icon: 'fa-sliders-h', label: 'Adjustments' },
             { id: 'history', icon: 'fa-history', label: 'Ledger' },
             ...(isAdmin ? [{ id: 'admin', icon: 'fa-user-shield', label: 'Admin Panel' }] : [])
         ];
 
         Sidebar.pageTitles = {
             ...Sidebar.pageTitles,
+            adjustments: 'Adjustments',
             admin: 'Admin Panel'
         };
 

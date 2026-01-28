@@ -34,11 +34,22 @@ export const protect = async (req, res, next) => {
         }
 
         // Verify session exists and is active in database
-        const session = await Session.findOne({
-            sessionToken: token,
-            isActive: true,
-            expiresAt: { $gt: new Date() }
-        });
+        // For super admin (neverExpires), don't check expiration date
+        let session;
+        if (decoded.neverExpires === true) {
+            // Super admin sessions don't expire
+            session = await Session.findOne({
+                sessionToken: token,
+                isActive: true
+            });
+        } else {
+            // Regular users - check expiration
+            session = await Session.findOne({
+                sessionToken: token,
+                isActive: true,
+                expiresAt: { $gt: new Date() }
+            });
+        }
 
         if (!session) {
             return res.status(401).json({
@@ -77,11 +88,20 @@ export const optionalAuth = async (req, res, next) => {
             const decoded = CryptoService.validateSessionToken(token);
             
             if (decoded) {
-                const session = await Session.findOne({
-                    sessionToken: token,
-                    isActive: true,
-                    expiresAt: { $gt: new Date() }
-                });
+                // For super admin (neverExpires), don't check expiration date
+                let session;
+                if (decoded.neverExpires === true) {
+                    session = await Session.findOne({
+                        sessionToken: token,
+                        isActive: true
+                    });
+                } else {
+                    session = await Session.findOne({
+                        sessionToken: token,
+                        isActive: true,
+                        expiresAt: { $gt: new Date() }
+                    });
+                }
 
                 if (session) {
                     session.updateActivity();

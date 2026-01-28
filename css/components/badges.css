@@ -29,6 +29,11 @@
     color: var(--danger);
 }
 
+.badge-income {
+    background: #E8F5E9;
+    color: #28a745;
+}
+
 .badge-proc {
     background: #FFF3E0;
     color: #E65100;
@@ -37,6 +42,11 @@
 .badge-loan {
     background: #F3E5F5;
     color: var(--purple);
+}
+
+.badge-adjust {
+    background: #E3F2FD;
+    color: var(--info);
 }
 
 /* Additional Badge States */

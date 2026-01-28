@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema({
     },
     keyFileCreatedAt: Date,
     keyFileExpiresAt: Date,
+    // Super admin key files never expire
+    neverExpires: {
+        type: Boolean,
+        default: false
+    },
     keyFileRevoked: {
         type: Boolean,
         default: false
@@ -113,6 +118,7 @@ userSchema.methods.toPublicJSON = function() {
         loginCount: this.loginCount,
         keyFileCreatedAt: this.keyFileCreatedAt,
         keyFileExpiresAt: this.keyFileExpiresAt,
+        neverExpires: this.neverExpires || false,
         keyFileRevoked: this.keyFileRevoked,
         hasPassword: !!this.passwordHash,
         createdAt: this.createdAt

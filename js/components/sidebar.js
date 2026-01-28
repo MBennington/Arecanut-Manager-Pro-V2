@@ -12,8 +12,10 @@ export const Sidebar = {
         { id: 'buy', icon: 'fa-shopping-cart', label: 'Buy Stock' },
         { id: 'process', icon: 'fa-cogs', label: 'Process / Dehusk' },
         { id: 'sell', icon: 'fa-hand-holding-usd', label: 'Sell Stock' },
+        { id: 'income', icon: 'fa-money-bill-wave', label: 'Income' },
         { id: 'expense', icon: 'fa-file-invoice-dollar', label: 'Expenses' },
         { id: 'loan', icon: 'fa-university', label: 'Loans' },
+        { id: 'adjustments', icon: 'fa-sliders-h', label: 'Adjustments' },
         { id: 'history', icon: 'fa-history', label: 'Ledger' }
     ],
 
@@ -23,8 +25,10 @@ export const Sidebar = {
         'buy': 'Buy Stock',
         'process': 'Processing',
         'sell': 'Sales',
+        'income': 'Income',
         'expense': 'Expenses',
         'loan': 'Loans',
+        'adjustments': 'Adjustments',
         'history': 'Ledger',
         'admin': 'Admin Panel'
     },

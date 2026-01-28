@@ -12,7 +12,8 @@ import Transaction from '../models/Transaction.js';
  */
 export const getTransactions = async (req, res) => {
     try {
-        const { type, startDate, endDate, limit = 100, sort = '-date' } = req.query;
+        // Default sort: date desc, then createdAt desc (latest entry within the same day first)
+        const { type, startDate, endDate, limit = 100, sort = '-date -createdAt' } = req.query;
         
         // Build query
         const query = {};
@@ -78,36 +79,121 @@ export const createTransaction = async (req, res) => {
     try {
         const { type, date, qty, price, inputQty, outputQty, amount, category, notes, loanType } = req.body;
         
+        // Debug logging
+        console.log('Creating transaction:', { type, date, amount, category, notes });
+        
+        // Validate required fields
+        if (!type) {
+            return res.status(400).json({
+                success: false,
+                error: 'Transaction type is required'
+            });
+        }
+        
+        if (!date) {
+            return res.status(400).json({
+                success: false,
+                error: 'Date is required'
+            });
+        }
+        
         // Prepare transaction data
         const txnData = {
             type,
             date: new Date(date),
-            notes
+            notes: notes || ''
         };
         
         // Type-specific processing
         switch (type) {
-            case 'BUY':
+            case 'BUY': {
                 txnData.qty = parseFloat(qty);
                 txnData.price = parseFloat(price);
                 break;
+            }
                 
-            case 'SELL':
+            case 'SELL': {
                 txnData.qty = parseFloat(qty);
                 txnData.price = parseFloat(price);
-                break;
                 
-            case 'PROCESS':
+                // --- Auto-processing logic when processed stock is insufficient ---
+                // 1. Get current stock and recovery stats
+                const stats = await Transaction.getStats();
+                const currentProcStock = stats.totalProcStock || 0;
+                
+                // 2. If there isn't enough processed stock, auto-convert raw stock
+                const requiredProc = txnData.qty || 0;
+                const deficitProc = requiredProc - currentProcStock;
+                
+                if (deficitProc > 0) {
+                    // Use average recovery if we have processing history, otherwise default to 25%
+                    const hasProcessHistory = (stats.processCount || 0) > 0;
+                    const recovery = hasProcessHistory && stats.avgRecovery
+                        ? stats.avgRecovery
+                        : 25;
+                    
+                    // Raw needed = deficitProc / (recovery / 100)
+                    const rawNeeded = +(deficitProc / (recovery / 100)).toFixed(3);
+                    
+                    console.log('Auto-processing before SELL', {
+                        requiredProc,
+                        currentProcStock,
+                        deficitProc,
+                        recovery,
+                        rawNeeded
+                    });
+                    
+                    await Transaction.create({
+                        type: 'PROCESS',
+                        date: new Date(date),
+                        inputQty: rawNeeded,
+                        outputQty: deficitProc,
+                        // Make it clear in the ledger that this is system-generated
+                        notes: `AUTO: Processed ${rawNeeded} raw → ${deficitProc} kernel for sale`
+                    });
+                }
+                
+                break;
+            }
+                
+            case 'PROCESS': {
                 txnData.inputQty = parseFloat(inputQty);
                 txnData.outputQty = parseFloat(outputQty);
                 break;
+            }
                 
-            case 'EXPENSE':
+            case 'EXPENSE': {
                 txnData.category = category;
                 txnData.amount = -Math.abs(parseFloat(amount));
                 break;
+            }
                 
-            case 'LOAN':
+            case 'INCOME': {
+                txnData.category = category;
+                txnData.amount = Math.abs(parseFloat(amount));
+                break;
+            }
+                
+            case 'ADJUSTMENT': {
+                // Manual corrections: directly adjust cash and stock deltas.
+                const cashDelta = Number(amount || 0);
+                const rawDelta = Number(req.body.rawStockChange || 0);
+                const procDelta = Number(req.body.procStockChange || 0);
+
+                if (!cashDelta && !rawDelta && !procDelta) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'At least one of cash, raw stock, or processed stock adjustment must be non-zero'
+                    });
+                }
+
+                txnData.amount = cashDelta;
+                txnData.rawStockChange = rawDelta;
+                txnData.procStockChange = procDelta;
+                break;
+            }
+
+            case 'LOAN': {
                 const loanAmount = parseFloat(amount);
                 if (loanType === 'TAKE') {
                     txnData.amount = Math.abs(loanAmount);
@@ -117,7 +203,16 @@ export const createTransaction = async (req, res) => {
                     txnData.notes = `Loan Repayment: ${notes}`;
                 }
                 break;
+            }
+                
+            default:
+                return res.status(400).json({
+                    success: false,
+                    error: `Unknown transaction type: ${type}`
+                });
         }
+        
+        console.log('Transaction data to save:', txnData);
         
         const transaction = await Transaction.create(txnData);
         
@@ -126,12 +221,23 @@ export const createTransaction = async (req, res) => {
             data: transaction
         });
     } catch (error) {
+        console.error('Transaction creation error:', error);
+        
         // Handle validation errors
         if (error.name === 'ValidationError') {
             const messages = Object.values(error.errors).map(e => e.message);
+            console.error('Validation errors:', messages);
             return res.status(400).json({
                 success: false,
                 error: messages.join(', ')
+            });
+        }
+        
+        // Handle duplicate key errors
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                error: 'Duplicate entry error'
             });
         }
         

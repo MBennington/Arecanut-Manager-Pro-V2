@@ -87,7 +87,12 @@ export const loginWithPassword = async (req, res) => {
         };
 
         const sessionToken = CryptoService.generateSessionToken(sessionData);
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        
+        // Get session duration based on role
+        // Super admin: never expires (100 years), others: 30 days
+        const sessionDuration = CryptoService.getSessionDuration(user.role);
+        const expiresAt = new Date(Date.now() + sessionDuration);
+        const neverExpires = user.role === 'superadmin';
 
         const parsedDeviceInfo = parseDeviceInfo(deviceInfo);
 
@@ -99,7 +104,8 @@ export const loginWithPassword = async (req, res) => {
                 ...parsedDeviceInfo,
                 ip: req.ip || req.connection?.remoteAddress
             },
-            expiresAt
+            expiresAt,
+            neverExpires
         });
 
         // Update login stats
@@ -112,7 +118,8 @@ export const loginWithPassword = async (req, res) => {
             data: {
                 token: sessionToken,
                 user: user.toPublicJSON(),
-                expiresAt
+                expiresAt,
+                neverExpires
             }
         });
     } catch (error) {
@@ -212,7 +219,12 @@ export const loginWithKeyFile = async (req, res) => {
         };
 
         const sessionToken = CryptoService.generateSessionToken(sessionData);
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+        
+        // Get session duration based on role
+        // Super admin: never expires (100 years), others: 30 days
+        const sessionDuration = CryptoService.getSessionDuration(user.role);
+        const expiresAt = new Date(Date.now() + sessionDuration);
+        const neverExpires = user.role === 'superadmin';
 
         // Parse device info for storage
         const parsedDeviceInfo = parseDeviceInfo(deviceInfo);
@@ -225,7 +237,8 @@ export const loginWithKeyFile = async (req, res) => {
                 ...parsedDeviceInfo,
                 ip: req.ip || req.connection?.remoteAddress
             },
-            expiresAt
+            expiresAt,
+            neverExpires
         });
 
         // Update user login stats
@@ -238,7 +251,8 @@ export const loginWithKeyFile = async (req, res) => {
             data: {
                 token: sessionToken,
                 user: user.toPublicJSON(),
-                expiresAt
+                expiresAt,
+                neverExpires
             }
         });
     } catch (error) {
@@ -682,7 +696,8 @@ export const initializeSuperAdmin = async (req, res) => {
 
         // Generate key file
         const keyId = crypto.randomUUID();
-        const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+        // Super admin key file never expires (100 years)
+        const expiresAt = new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000);
 
         // Create superadmin user
         const user = new User({
@@ -693,7 +708,8 @@ export const initializeSuperAdmin = async (req, res) => {
             deviceLimit: 5,
             keyFileId: keyId,
             keyFileCreatedAt: new Date(),
-            keyFileExpiresAt: expiresAt
+            keyFileExpiresAt: expiresAt,
+            neverExpires: true
         });
 
         // Set password for admin panel access

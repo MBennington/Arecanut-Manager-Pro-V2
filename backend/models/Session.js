@@ -58,6 +58,12 @@ const sessionSchema = new mongoose.Schema({
         index: true
     },
     
+    // Super admin sessions never expire
+    neverExpires: {
+        type: Boolean,
+        default: false
+    },
+    
     // Termination info
     terminatedAt: Date,
     terminatedReason: {
@@ -89,7 +95,10 @@ sessionSchema.statics.getActiveSessionsForUser = function(userId) {
     return this.find({
         user: userId,
         isActive: true,
-        expiresAt: { $gt: new Date() }
+        $or: [
+            { neverExpires: true },
+            { expiresAt: { $gt: new Date() } }
+        ]
     }).sort({ lastActivityAt: -1 });
 };
 
@@ -97,7 +106,10 @@ sessionSchema.statics.countActiveDevices = function(userId) {
     return this.distinct('deviceFingerprint', {
         user: userId,
         isActive: true,
-        expiresAt: { $gt: new Date() }
+        $or: [
+            { neverExpires: true },
+            { expiresAt: { $gt: new Date() } }
+        ]
     });
 };
 
@@ -129,7 +141,10 @@ sessionSchema.statics.terminateOldestSession = async function(userId) {
 sessionSchema.statics.getActiveSessions = function() {
     return this.find({
         isActive: true,
-        expiresAt: { $gt: new Date() }
+        $or: [
+            { neverExpires: true },
+            { expiresAt: { $gt: new Date() } }
+        ]
     })
     .populate('user', 'username email role')
     .sort({ lastActivityAt: -1 });
@@ -140,7 +155,10 @@ sessionSchema.statics.getSessionStats = async function() {
         {
             $match: {
                 isActive: true,
-                expiresAt: { $gt: new Date() }
+                $or: [
+                    { neverExpires: true },
+                    { expiresAt: { $gt: new Date() } }
+                ]
             }
         },
         {

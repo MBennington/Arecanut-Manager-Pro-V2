@@ -4,6 +4,7 @@
  */
 
 import { StateService } from '../services/state.js';
+import { AuthService } from '../services/auth.js';
 
 export const FormsPage = {
     onSuccess: null,
@@ -106,6 +107,40 @@ export const FormsPage = {
                 </div>
             </div>
 
+            <!-- Income Form -->
+            <div id="income" class="view-section">
+                <div class="form-card">
+                    <h2>
+                        <i class="fas fa-money-bill-wave" style="color: #28a745"></i>
+                        Income
+                    </h2>
+                    <form id="incomeForm">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" class="form-control" name="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select class="form-control" name="category" required>
+                                <option value="Sale">Sale</option>
+                                <option value="Service">Service</option>
+                                <option value="Investment">Investment</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount (LKR)</label>
+                            <input type="number" class="form-control" name="amount" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" class="form-control" name="notes" placeholder="Income details">
+                        </div>
+                        <button type="submit" class="btn btn-success">Record Income</button>
+                    </form>
+                </div>
+            </div>
+
             <!-- Expense Form -->
             <div id="expense" class="view-section">
                 <div class="form-card">
@@ -171,6 +206,42 @@ export const FormsPage = {
                     </form>
                 </div>
             </div>
+
+            <!-- Adjustments Form -->
+            <div id="adjustments" class="view-section">
+                <div class="form-card">
+                    <h2>
+                        <i class="fas fa-sliders-h" style="color: var(--info)"></i>
+                        Adjustments
+                    </h2>
+                    <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 16px;">
+                        Manually correct stock and cash balances. Use positive values to increase and negative values to decrease.
+                    </p>
+                    <form id="adjustmentForm">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" class="form-control" name="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Raw Stock Adjustment (kg)</label>
+                            <input type="number" class="form-control" name="rawStockChange" step="0.1" placeholder="e.g. 5 or -5">
+                        </div>
+                        <div class="form-group">
+                            <label>Processed Stock Adjustment (kg)</label>
+                            <input type="number" class="form-control" name="procStockChange" step="0.1" placeholder="e.g. 3 or -3">
+                        </div>
+                        <div class="form-group">
+                            <label>Cash Adjustment (LKR)</label>
+                            <input type="number" class="form-control" name="amount" placeholder="e.g. 1000 or -1000">
+                        </div>
+                        <div class="form-group">
+                            <label>Reason / Notes</label>
+                            <input type="text" class="form-control" name="notes" placeholder="Reason for adjustment" maxlength="500">
+                        </div>
+                        <button type="submit" class="btn btn-blue">Apply Adjustment</button>
+                    </form>
+                </div>
+            </div>
         `;
     },
 
@@ -193,8 +264,10 @@ export const FormsPage = {
             buyForm: 'BUY',
             processForm: 'PROCESS',
             sellForm: 'SELL',
+            incomeForm: 'INCOME',
             expenseForm: 'EXPENSE',
-            loanForm: 'LOAN'
+            loanForm: 'LOAN',
+            adjustmentForm: 'ADJUSTMENT'
         };
 
         Object.entries(forms).forEach(([formId, type]) => {
@@ -215,6 +288,13 @@ export const FormsPage = {
         const form = event.target;
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
+        
+        // Check authentication first
+        if (!AuthService.isAuthenticated()) {
+            alert('Please log in to record transactions.');
+            window.location.href = 'login.html';
+            return;
+        }
         
         // Show loading
         submitBtn.disabled = true;
@@ -245,6 +325,14 @@ export const FormsPage = {
                     txnData.qty = parseFloat(data.qty);
                     txnData.price = parseFloat(data.price);
                     break;
+                case 'INCOME':
+                    txnData.category = data.category;
+                    const incomeAmount = parseFloat(data.amount);
+                    if (isNaN(incomeAmount) || incomeAmount <= 0) {
+                        throw new Error('Please enter a valid amount greater than 0');
+                    }
+                    txnData.amount = incomeAmount;
+                    break;
                 case 'EXPENSE':
                     txnData.category = data.category;
                     txnData.amount = parseFloat(data.amount);
@@ -253,7 +341,16 @@ export const FormsPage = {
                     txnData.amount = parseFloat(data.amount);
                     txnData.loanType = data.loanType;
                     break;
+
+                case 'ADJUSTMENT':
+                    txnData.rawStockChange = data.rawStockChange ? parseFloat(data.rawStockChange) : 0;
+                    txnData.procStockChange = data.procStockChange ? parseFloat(data.procStockChange) : 0;
+                    txnData.amount = data.amount ? parseFloat(data.amount) : 0;
+                    break;
             }
+
+            // Debug logging
+            console.log('Submitting transaction:', txnData);
 
             // Save via API
             await StateService.addTransaction(txnData);
@@ -269,7 +366,20 @@ export const FormsPage = {
             }
         } catch (error) {
             console.error('Save failed:', error);
-            alert('Failed to save. Please try again.');
+            console.error('Error details:', error.message);
+            
+            // Check for authentication errors
+            if (error.message.includes('authentication') || 
+                error.message.includes('token') || 
+                error.message.includes('Session expired') ||
+                error.message.includes('401') ||
+                error.message.includes('No authentication')) {
+                alert('Your session has expired. Please log in again.');
+                window.location.href = 'login.html';
+            } else {
+                // Show the actual error message
+                alert(`Failed to save transaction:\n\n${error.message}`);
+            }
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;

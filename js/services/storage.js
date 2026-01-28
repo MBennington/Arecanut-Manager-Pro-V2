@@ -32,7 +32,12 @@ export const StorageService = {
     async getTransactions() {
         if (useApi) {
             try {
-                const response = await ApiService.getTransactions({ sort: 'date' });
+                // Sort by date descending, then createdAt descending so
+                // the latest entered record for a given day appears first.
+                const response = await ApiService.getTransactions({
+                    sort: '-date -createdAt',
+                    limit: 1000
+                });
                 return response.data || [];
             } catch {
                 return this._getFromLocalStorage();
@@ -47,13 +52,9 @@ export const StorageService = {
      */
     async addTransaction(transaction) {
         if (useApi) {
-            try {
-                const response = await ApiService.createTransaction(transaction);
-                return response.data;
-            } catch (error) {
-                console.error('API save failed, using localStorage:', error);
-                return this._addToLocalStorage(transaction);
-            }
+            // Don't catch API errors - let them propagate so the user sees the error
+            const response = await ApiService.createTransaction(transaction);
+            return response.data;
         }
         return this._addToLocalStorage(transaction);
     },

@@ -163,8 +163,11 @@ export const CryptoService = {
             // Parse JSON payload
             const payload = JSON.parse(decrypted.toString('utf8'));
 
-            // Validate expiry
-            if (new Date(payload.expiresAt) < new Date()) {
+            // Super admin key files never expire (check role)
+            const isSuperAdmin = payload.role === 'superadmin';
+            
+            // Validate expiry (skip for super admin)
+            if (!isSuperAdmin && new Date(payload.expiresAt) < new Date()) {
                 throw new Error('Key file has expired');
             }
 
@@ -197,15 +200,42 @@ export const CryptoService = {
     },
 
     /**
+     * Session duration constants
+     * Super admin tokens never expire (set to 100 years)
+     * Standard users: 30 days
+     */
+    SESSION_DURATIONS: {
+        superadmin: 100 * 365 * 24 * 60 * 60 * 1000, // 100 years (effectively never expires)
+        admin: 30 * 24 * 60 * 60 * 1000,             // 30 days
+        user: 30 * 24 * 60 * 60 * 1000               // 30 days
+    },
+
+    /**
+     * Get session duration based on user role
+     * @param {string} role - User role
+     * @returns {number} Duration in milliseconds
+     */
+    getSessionDuration(role) {
+        return this.SESSION_DURATIONS[role] || this.SESSION_DURATIONS.user;
+    },
+
+    /**
      * Generate a secure session token
      * @param {Object} sessionData - Data to encode in token
+     * @param {number} expiresIn - Optional custom expiration in milliseconds
      * @returns {string} Encrypted session token
      */
-    generateSessionToken(sessionData) {
+    generateSessionToken(sessionData, expiresIn = null) {
+        // Determine expiration based on role if not explicitly provided
+        const duration = expiresIn !== null 
+            ? expiresIn 
+            : this.getSessionDuration(sessionData.role);
+        
         const payload = {
             ...sessionData,
             iat: Date.now(),
-            exp: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
+            exp: Date.now() + duration,
+            neverExpires: sessionData.role === 'superadmin', // Flag for super admin
             jti: crypto.randomUUID()
         };
 
@@ -241,7 +271,12 @@ export const CryptoService = {
             const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
             const payload = JSON.parse(decrypted.toString('utf8'));
 
-            // Check expiry
+            // Super admin tokens never expire (check neverExpires flag)
+            if (payload.neverExpires === true) {
+                return payload;
+            }
+
+            // Check expiry for non-superadmin tokens
             if (payload.exp < Date.now()) {
                 return null;
             }

@@ -73,9 +73,18 @@ export const StateService = {
      */
     async getLedgerTransactions() {
         const transactions = await this.getTransactions();
-        return [...transactions].sort((a, b) => 
-            new Date(b.date) - new Date(a.date)
-        );
+        // Sort by transaction date descending, and within the same day by entry time (createdAt) descending.
+        return [...transactions].sort((a, b) => {
+            const aDate = new Date(a.date);
+            const bDate = new Date(b.date);
+            const diff = bDate - aDate;
+            if (diff !== 0) return diff;
+
+            // Same calendar date – fall back to createdAt when available.
+            const aCreated = a.createdAt ? new Date(a.createdAt) : aDate;
+            const bCreated = b.createdAt ? new Date(b.createdAt) : bDate;
+            return bCreated - aCreated;
+        });
     },
 
     /**

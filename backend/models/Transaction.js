@@ -1,6 +1,6 @@
 /**
  * Transaction Model
- * Schema for all transaction types: BUY, SELL, PROCESS, EXPENSE, LOAN
+ * Schema for all transaction types: BUY, SELL, PROCESS, EXPENSE, INCOME, LOAN, ADJUSTMENT
  */
 
 import mongoose from 'mongoose';
@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 const transactionSchema = new mongoose.Schema({
     type: {
         type: String,
-        enum: ['BUY', 'SELL', 'PROCESS', 'EXPENSE', 'LOAN'],
+        enum: ['BUY', 'SELL', 'PROCESS', 'EXPENSE', 'INCOME', 'LOAN', 'ADJUSTMENT'],
         required: [true, 'Transaction type is required'],
         index: true
     },
@@ -59,10 +59,10 @@ const transactionSchema = new mongoose.Schema({
         max: [100, 'Recovery cannot exceed 100%']
     },
     
-    // Expense specific
+    // Expense and Income specific
     category: {
         type: String,
-        enum: ['Labour', 'Electricity', 'Transport', 'Other', null]
+        enum: ['Labour', 'Electricity', 'Transport', 'Other', 'Sale', 'Service', 'Investment', null]
     },
     
     // General
@@ -78,7 +78,7 @@ const transactionSchema = new mongoose.Schema({
 });
 
 // Compound index for efficient date-range queries
-transactionSchema.index({ date: -1, type: 1 });
+transactionSchema.index({ date: -1, createdAt: -1, type: 1 });
 
 // Pre-save middleware to compute derived fields
 transactionSchema.pre('save', function(next) {
@@ -108,10 +108,27 @@ transactionSchema.pre('save', function(next) {
             this.procStockChange = 0;
             break;
             
+        case 'INCOME':
+            // Amount should be positive (already set by controller)
+            this.rawStockChange = 0;
+            this.procStockChange = 0;
+            break;
+            
         case 'LOAN':
             // Amount can be positive (take) or negative (repay)
             this.rawStockChange = 0;
             this.procStockChange = 0;
+            break;
+
+        case 'ADJUSTMENT':
+            // For manual adjustments we trust the provided deltas:
+            // - amount           (cash change, + or -)
+            // - rawStockChange   (raw stock delta, + or -)
+            // - procStockChange  (processed stock delta, + or -)
+            // Just ensure they are numbers.
+            this.amount = Number(this.amount || 0);
+            this.rawStockChange = Number(this.rawStockChange || 0);
+            this.procStockChange = Number(this.procStockChange || 0);
             break;
     }
     next();
