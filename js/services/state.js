@@ -153,20 +153,16 @@ export const StateService = {
 
         const chartDates = Object.keys(chartData).sort();
 
-        // Inventory must never be shown as negative (clamp for display)
-        const rawStockClamped = Math.max(0, rawStock);
-        const procStockClamped = Math.max(0, procStock);
-
         return {
             cash,
-            rawStock: rawStockClamped,
-            procStock: procStockClamped,
+            rawStock,
+            procStock,
             avgRecovery,
             processCount,
             chartDates,
             cashPoints: chartDates.map(d => chartData[d]),
-            rawPoints: chartDates.map(d => Math.max(0, stockData[d].raw)),
-            procPoints: chartDates.map(d => Math.max(0, stockData[d].proc))
+            rawPoints: chartDates.map(d => stockData[d].raw),
+            procPoints: chartDates.map(d => stockData[d].proc)
         };
     },
 
