@@ -115,44 +115,30 @@ export const createTransaction = async (req, res) => {
             case 'SELL': {
                 txnData.qty = parseFloat(qty);
                 txnData.price = parseFloat(price);
-                
-                // --- Auto-processing logic when processed stock is insufficient ---
-                // 1. Get current stock and recovery stats
+                const sellQty = txnData.qty || 0;
+                if (sellQty <= 0) break;
+
+                // --- Always treat sold kernel as produced from raw (inventory never goes negative) ---
+                // 1. Get average recovery rate
                 const stats = await Transaction.getStats();
-                const currentProcStock = stats.totalProcStock || 0;
-                
-                // 2. If there isn't enough processed stock, auto-convert raw stock
-                const requiredProc = txnData.qty || 0;
-                const deficitProc = requiredProc - currentProcStock;
-                
-                if (deficitProc > 0) {
-                    // Use average recovery if we have processing history, otherwise default to 25%
-                    const hasProcessHistory = (stats.processCount || 0) > 0;
-                    const recovery = hasProcessHistory && stats.avgRecovery
-                        ? stats.avgRecovery
-                        : 25;
-                    
-                    // Raw needed = deficitProc / (recovery / 100)
-                    const rawNeeded = +(deficitProc / (recovery / 100)).toFixed(3);
-                    
-                    console.log('Auto-processing before SELL', {
-                        requiredProc,
-                        currentProcStock,
-                        deficitProc,
-                        recovery,
-                        rawNeeded
-                    });
-                    
-                    await Transaction.create({
-                        type: 'PROCESS',
-                        date: new Date(date),
-                        inputQty: rawNeeded,
-                        outputQty: deficitProc,
-                        // Make it clear in the ledger that this is system-generated
-                        notes: `AUTO: Processed ${rawNeeded} raw → ${deficitProc} kernel for sale`
-                    });
-                }
-                
+                const hasProcessHistory = (stats.processCount || 0) > 0;
+                const recovery = hasProcessHistory && stats.avgRecovery
+                    ? stats.avgRecovery
+                    : 25;
+
+                // 2. For the full sold quantity: add kernel (implicit process) and reduce raw by recovery
+                //    Raw needed to produce sellQty kernel = sellQty / (recovery/100)
+                const rawNeeded = +(sellQty / (recovery / 100)).toFixed(3);
+
+                await Transaction.create({
+                    type: 'PROCESS',
+                    date: new Date(date),
+                    inputQty: rawNeeded,
+                    outputQty: sellQty,
+                    notes: `AUTO: Processed ${rawNeeded} raw → ${sellQty} kg kernel for sale`
+                });
+
+                // 3. SELL then only deducts the kernel we just "produced", so processed stock never goes negative
                 break;
             }
                 
@@ -341,18 +327,24 @@ export const getStats = async (req, res) => {
             Transaction.getChartData()
         ]);
         
+        // Inventory must never be shown as negative (clamp for display)
+        const rawStock = Math.max(0, stats.totalRawStock || 0);
+        const procStock = Math.max(0, stats.totalProcStock || 0);
+        const rawPoints = (chartData.rawPoints || []).map(v => Math.max(0, v));
+        const procPoints = (chartData.procPoints || []).map(v => Math.max(0, v));
+
         res.json({
             success: true,
             data: {
                 cash: stats.totalCash || 0,
-                rawStock: stats.totalRawStock || 0,
-                procStock: stats.totalProcStock || 0,
+                rawStock,
+                procStock,
                 avgRecovery: parseFloat((stats.avgRecovery || 0).toFixed(1)),
                 processCount: stats.processCount || 0,
                 chartDates: chartData.dates,
                 cashPoints: chartData.cashPoints,
-                rawPoints: chartData.rawPoints,
-                procPoints: chartData.procPoints
+                rawPoints,
+                procPoints
             }
         });
     } catch (error) {
